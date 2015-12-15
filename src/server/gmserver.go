@@ -53,7 +53,7 @@ func NewServer(tryTimes int) *Server {
 		workJobs:       make(map[string]*Job),
 		jobStores:      make(map[string]storage.JobQueue),
 		funcTimeout:    make(map[string]int),
-		startSessionId: 1,
+		startSessionId: 0,
 		tryTimes:       tryTimes,
 	}
 }
@@ -453,6 +453,7 @@ func (server *Server) handleProtoEvt(e *Event) {
 		w, ok := server.worker[sessionId]
 		if !ok {
 			logger.Logger().W("unregister worker, sessionId %d", sessionId)
+			e.result <- nil
 			break
 		}
 

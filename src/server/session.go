@@ -92,14 +92,17 @@ func (session *Session) handleConnection(server *Server, conn net.Conn) {
 			e := &Event{tp: tp, fromSessionId: sessionId,
 				result: createResCh()}
 			server.protoEvtCh <- e
-			job := (<-e.result).(*Job)
+			job := <-e.result
 			if job == nil {
-				logger.Logger().W("sessionId:%v no job", sessionId)
+				logger.Logger().T("sessionId:%v no job", sessionId)
 				sendReplyResult(inbox, nojobReply)
 				break
 			}
 			sendReply(inbox, JOB_ASSIGN_UNIQ, [][]byte{
-				[]byte(job.Handle), []byte(job.FuncName), []byte(job.Id), job.Data})
+				[]byte(job.(*Job).Handle),
+				[]byte(job.(*Job).FuncName),
+				[]byte(job.(*Job).Id),
+				job.(*Job).Data})
 			break
 		case SUBMIT_JOB, SUBMIT_JOB_LOW_BG, SUBMIT_JOB_LOW:
 			if session.c == nil {
