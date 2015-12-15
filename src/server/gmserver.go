@@ -129,9 +129,9 @@ func (server *Server) clearTimeoutJob() {
 				delete(server.workJobs, k)
 				logger.Logger().T("remove time out job %v", j)
 			}
-		} else {
-			logger.Logger().I("job cant time out %v", j)
-		}
+		} /* else {
+			logger.Logger().T("job cant time out %v", j)
+		}*/
 	}
 }
 
@@ -258,7 +258,7 @@ func (server *Server) popJob(sessionId int64) *Job {
 
 			jb := queue.PopJob()
 			if jb != nil {
-				logger.Logger().T("pop job work:%v job:%v", sessionId, jb.Handle)
+				logger.Logger().T("pop job work:%v job:%v", sessionId, jb)
 				return jb
 			}
 		}
@@ -305,7 +305,7 @@ func (server *Server) handleSubmitJob(e *Event) {
 	j.IsBackGround = isBackGround(e.tp)
 
 	logger.Logger().T("%v func:%v uniq:%v info:%+v", CmdDescription(e.tp),
-		args.t1.(string), args.t2.(string), j)
+		args.t1, args.t2, j)
 
 	j.Priority = cmd2Priority(e.tp)
 
@@ -468,12 +468,12 @@ func (server *Server) handleProtoEvt(e *Event) {
 			j.ProcessAt = time.Now()
 			j.ProcessBy = sessionId
 			server.workJobs[j.Handle] = j
-
+			e.result <- j
 		} else { //no job
 			w.status = wsPrepareForSleep
-
+			e.result <- nil
 		}
-		e.result <- j
+
 		break
 	case PRE_SLEEP:
 		sessionId := e.fromSessionId

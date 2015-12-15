@@ -93,16 +93,24 @@ func (session *Session) handleConnection(server *Server, conn net.Conn) {
 				result: createResCh()}
 			server.protoEvtCh <- e
 			job := <-e.result
-			if job.(*Job) == nil {
+			if job == nil {
 				logger.Logger().T("sessionId:%v no job", sessionId)
 				sendReplyResult(inbox, nojobReply)
 				break
 			}
-			sendReply(inbox, JOB_ASSIGN_UNIQ, [][]byte{
-				[]byte(job.(*Job).Handle),
-				[]byte(job.(*Job).FuncName),
-				[]byte(job.(*Job).Id),
-				job.(*Job).Data})
+			logger.Logger().T("grap %v %v", sessionId, job.(*Job))
+			if tp == GRAB_JOB {
+				sendReply(inbox, JOB_ASSIGN, [][]byte{
+					[]byte(job.(*Job).Handle),
+					[]byte(job.(*Job).FuncName),
+					job.(*Job).Data})
+			} else {
+				sendReply(inbox, JOB_ASSIGN_UNIQ, [][]byte{
+					[]byte(job.(*Job).Handle),
+					[]byte(job.(*Job).FuncName),
+					[]byte(job.(*Job).Id),
+					job.(*Job).Data})
+			}
 			break
 		case SUBMIT_JOB, SUBMIT_JOB_LOW_BG, SUBMIT_JOB_LOW:
 			if session.c == nil {
