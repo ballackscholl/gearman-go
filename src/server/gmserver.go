@@ -270,6 +270,10 @@ func (server *Server) popJob(sessionId int64) *Job {
 
 func (server *Server) wakeupWorker(funcName string, w *Worker) bool {
 
+	if w.status == wsRunning {
+		return false
+	}
+
 	jq, ok := server.jobStores[funcName]
 	if !ok || jq.Length() == 0 {
 		return false
