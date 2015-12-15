@@ -53,7 +53,7 @@ func NewServer(tryTimes int) *Server {
 		workJobs:       make(map[string]*Job),
 		jobStores:      make(map[string]storage.JobQueue),
 		funcTimeout:    make(map[string]int),
-		startSessionId: 0,
+		startSessionId: 1,
 		tryTimes:       tryTimes,
 	}
 }
@@ -262,9 +262,16 @@ func (server *Server) popJob(sessionId int64) *Job {
 
 }
 
-func (server *Server) wakeupWorker(w *Worker) bool {
-	logger.Logger().T("wakeup sessionId", w.SessionId)
+func (server *Server) wakeupWorker(funcName string, w *Worker) bool {
+
+	jq, ok := server.jobStores[funcName]
+	if !ok || jq.Length() == 0 {
+		return false
+	}
+
+	logger.Logger().T("wakeup sessionId: %v", w.SessionId)
 	w.Send(wakeupReply)
+	return true
 }
 
 func (server *Server) handleSubmitJob(e *Event) {
@@ -304,14 +311,15 @@ func (server *Server) doAddJob(j *Job) {
 	workers, ok := server.funcWorker[j.FuncName]
 	if ok {
 		var i int = 0
-		for it := 0, workers.Workers.Front(); it != nil; it = it.Next() {
-			server.wakeupWorker(it.Value.(*Worker))
+		for it := workers.Workers.Front(); it != nil; it = it.Next() {
+			server.wakeupWorker(j.FuncName, it.Value.(*Worker))
 			i++
 			if server.tryTimes > 0 && i >= server.tryTimes {
 				break
 			}
 		}
 	}
+
 }
 
 func (sever *Server) checkAndRemoveJob(tp uint32, j *Job) {
@@ -462,7 +470,7 @@ func (server *Server) handleProtoEvt(e *Event) {
 		logger.Logger().T("worker sessionId %d sleep", sessionId)
 		//check if there are any jobs for this worker
 		for k, v := range w.canDo {
-			if v && server.wakeupWorker(w) {
+			if v && server.wakeupWorker(k, w) {
 				break
 			}
 		}
