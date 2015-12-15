@@ -56,8 +56,6 @@ func allocJobId() string {
 func decodeArgs(cmd uint32, buf []byte) ([][]byte, bool) {
 	argc := common.ArgCount(cmd)
 
-	logger.Logger().T("cmd:%v details:%v", common.CmdDescription(cmd), buf)
-
 	if argc == 0 {
 		return nil, true
 	}
@@ -136,7 +134,6 @@ func sendReplyResult(out chan []byte, data []byte) {
 
 func validCmd(cmd uint32) bool {
 	if cmd >= common.CAN_DO && cmd <= common.SUBMIT_JOB_EPOCH {
-		logger.Logger().T("cmd %d:%v", cmd, common.CmdDescription(cmd))
 		return true
 	}
 

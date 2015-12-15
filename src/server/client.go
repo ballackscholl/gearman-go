@@ -1,6 +1,7 @@
 package server
 
 import (
+	"net"
 	"time"
 )
 
@@ -15,5 +16,6 @@ func (connector *Connector) Send(data []byte) {
 }
 
 type Client struct {
+	Conn net.Conn
 	Connector
 }

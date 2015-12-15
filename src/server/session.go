@@ -103,18 +103,19 @@ func (session *Session) handleConnection(server *Server, conn net.Conn) {
 			break
 		case SUBMIT_JOB, SUBMIT_JOB_LOW_BG, SUBMIT_JOB_LOW:
 			if session.c == nil {
-				session.c = &Client{Connector: Connector{SessionId: sessionId, in: inbox,
+				session.c = &Client{Conn: conn, Connector: Connector{SessionId: sessionId, in: inbox,
 					ConnectAt: time.Now()}}
 			}
 			e := &Event{tp: tp,
 				args:   &Tuple{t0: session.c, t1: args[0], t2: args[1], t3: args[2]},
 				result: createResCh(),
 			}
+			logger.Logger().T("submit handler:%v func:%s uniq:%s", sessionId, args[0], args[1])
 			server.protoEvtCh <- e
 			handle := <-e.result
 			sendReply(inbox, JOB_CREATED, [][]byte{[]byte(handle.(string)), args[1]})
 			break
-		case WORK_DATA, WORK_WARNING, WORK_STATUS, WORK_COMPLETE,
+		case WORK_DATA, WORK_WARNING, WORK_COMPLETE,
 			WORK_FAIL, WORK_EXCEPTION:
 			if session.w == nil {
 				logger.Logger().W("can't perform %s, need send CAN_DO first", CmdDescription(tp))

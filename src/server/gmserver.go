@@ -1,9 +1,10 @@
 package server
 
 import (
+	"bytes"
 	. "common"
 	"container/list"
-	//"encoding/json"
+	"fmt"
 	"net"
 	"storage"
 	"storage/memory"
@@ -34,6 +35,7 @@ type Event struct {
 type Server struct {
 	protoEvtCh     chan *Event
 	startSessionId int64
+	tryTimes       int
 	funcWorker     map[string]*JobWorkerMap
 	worker         map[int64]*Worker
 	client         map[int64]*Client
@@ -42,7 +44,7 @@ type Server struct {
 	jobStores      map[string]storage.JobQueue
 }
 
-func NewServer() *Server {
+func NewServer(tryTimes int) *Server {
 	return &Server{
 		funcWorker:     make(map[string]*JobWorkerMap),
 		protoEvtCh:     make(chan *Event, 100),
@@ -51,8 +53,61 @@ func NewServer() *Server {
 		workJobs:       make(map[string]*Job),
 		jobStores:      make(map[string]storage.JobQueue),
 		funcTimeout:    make(map[string]int),
-		startSessionId: 1,
+		startSessionId: 0,
+		tryTimes:       tryTimes,
 	}
+}
+
+func (server *Server) GetJobStatus() string {
+	var buffer bytes.Buffer
+	buffer.WriteString("waiting:[")
+	for key, jq := range server.jobStores {
+		buffer.WriteString(fmt.Sprintf("%v:%v,", key, jq.Length()))
+	}
+	buffer.WriteString("]\n")
+
+	buffer.WriteString(fmt.Sprintf("protoEvtCh:%v, working:%v", len(server.protoEvtCh), len(server.workJobs)))
+
+	return buffer.String()
+}
+
+func (server *Server) GetFuncWorkerStatus() string {
+	var buffer bytes.Buffer
+	for key, jw := range server.funcWorker {
+		to, ok := server.funcTimeout[key]
+		if !ok {
+			to = 0
+		}
+		buffer.WriteString(fmt.Sprintf("func %v to %v[", key, to))
+		for it := jw.Workers.Front(); it != nil; it = it.Next() {
+			buffer.WriteString(fmt.Sprintf("id:%v ip:%v,", it.Value.(*Worker).Connector.SessionId,
+				it.Value.(*Worker).Conn.RemoteAddr()))
+		}
+		buffer.WriteString("]\n")
+	}
+	return buffer.String()
+}
+
+func (server *Server) GetWorkerStatus() string {
+	var buffer bytes.Buffer
+	buffer.WriteString("work[")
+	for key, clt := range server.worker {
+		buffer.WriteString(fmt.Sprintf("id:%v ip:%v,", key,
+			clt.Conn.RemoteAddr()))
+	}
+	buffer.WriteString("]\n")
+	return buffer.String()
+}
+
+func (server *Server) GetClientStatus() string {
+	var buffer bytes.Buffer
+	buffer.WriteString("client[")
+	for key, wk := range server.client {
+		buffer.WriteString(fmt.Sprintf("id:%v ip:%v,", key,
+			wk.Conn.RemoteAddr()))
+	}
+	buffer.WriteString("]\n")
+	return buffer.String()
 }
 
 func (server *Server) allocSessionId() int64 {
@@ -70,13 +125,15 @@ func (server *Server) clearTimeoutJob() {
 					c.Send(timeoutReply)
 				}
 				delete(server.workJobs, k)
+				logger.Logger().T("remove time out job %v", j)
 			}
+		} else {
+			logger.Logger().I("job cant time out %v", j)
 		}
 	}
-
 }
 
-func (server *Server) Start(addr string) {
+func (server *Server) Start(addr string, monAddr string) {
 	ln, err := net.Listen("tcp", addr)
 	if err != nil {
 		logger.Logger().E("%v", err)
@@ -84,6 +141,8 @@ func (server *Server) Start(addr string) {
 
 	logger.Logger().I("listening on %v", addr)
 	go server.EvtLoop()
+
+	go registerWebHandler(server, monAddr)
 
 	for {
 		conn, err := ln.Accept()
@@ -103,8 +162,6 @@ func (server *Server) EvtLoop() {
 		case e := <-server.protoEvtCh:
 			server.handleProtoEvt(e)
 		case <-tick.C:
-			logger.Logger().T("protoEvtCh:%v, worker:%v clientCount:%v",
-				len(server.protoEvtCh), len(server.worker), len(server.client))
 			server.clearTimeoutJob()
 		}
 	}
@@ -118,7 +175,7 @@ func (server *Server) addWorker(l *list.List, w *Worker) {
 		}
 	}
 
-	l.PushBack(w) //add to worker list
+	l.PushBack(w)
 }
 
 func (server *Server) getJobWorkPair(funcName string) *JobWorkerMap {
@@ -175,7 +232,7 @@ func (server *Server) removeWorkerBySessionId(sessionId int64) {
 func (server *Server) removeWorker(l *list.List, sessionId int64) {
 	for it := l.Front(); it != nil; it = it.Next() {
 		if it.Value.(*Worker).SessionId == sessionId {
-			logger.Logger().T("removeWorker sessionId %d", sessionId)
+			logger.Logger().T("removeWorker sessionId %v", sessionId)
 			l.Remove(it)
 			return
 		}
@@ -205,15 +262,9 @@ func (server *Server) popJob(sessionId int64) *Job {
 
 }
 
-func (server *Server) wakeupWorker(funcName string, w *Worker) bool {
-	if queue, ok := server.jobStores[funcName]; ok {
-		if queue.Length() > 0 {
-			logger.Logger().T("wakeup sessionId", w.SessionId)
-			w.Send(wakeupReply)
-			return true
-		}
-	}
-	return false
+func (server *Server) wakeupWorker(w *Worker) bool {
+	logger.Logger().T("wakeup sessionId", w.SessionId)
+	w.Send(wakeupReply)
 }
 
 func (server *Server) handleSubmitJob(e *Event) {
@@ -252,12 +303,15 @@ func (server *Server) doAddJob(j *Job) {
 	queue.PushJob(j)
 	workers, ok := server.funcWorker[j.FuncName]
 	if ok {
-		for i, it := 0, workers.Workers.Front(); it != nil && i < 3; it = it.Next() {
-			server.wakeupWorker(j.FuncName, it.Value.(*Worker))
+		var i int = 0
+		for it := 0, workers.Workers.Front(); it != nil; it = it.Next() {
+			server.wakeupWorker(it.Value.(*Worker))
 			i++
+			if server.tryTimes > 0 && i >= server.tryTimes {
+				break
+			}
 		}
 	}
-
 }
 
 func (sever *Server) checkAndRemoveJob(tp uint32, j *Job) {
@@ -284,6 +338,8 @@ func (server *Server) handleWorkReport(e *Event) {
 	if !ok {
 		logger.Logger().W("job lost:%v  handle %v", CmdDescription(e.tp), jobhandle)
 		return
+	} else if e.tp != WORK_DATA {
+		delete(server.workJobs, jobhandle)
 	}
 
 	if j.Handle != jobhandle {
@@ -315,7 +371,6 @@ func (server *Server) handleCloseSession(e *Event) {
 		if sessionId != w.SessionId {
 			logger.Logger().E("sessionId not match %d-%d, bug found", sessionId, w.SessionId)
 		}
-		logger.Logger().T("removeWorker sessionId", sessionId)
 		server.removeWorkerBySessionId(w.SessionId)
 	} else if c, ok := server.client[sessionId]; ok {
 		logger.Logger().T("removeClient sessionId", sessionId)
@@ -407,7 +462,7 @@ func (server *Server) handleProtoEvt(e *Event) {
 		logger.Logger().T("worker sessionId %d sleep", sessionId)
 		//check if there are any jobs for this worker
 		for k, v := range w.canDo {
-			if v && server.wakeupWorker(k, w) {
+			if v && server.wakeupWorker(w) {
 				break
 			}
 		}
