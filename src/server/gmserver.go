@@ -129,9 +129,7 @@ func (server *Server) clearTimeoutJob() {
 				delete(server.workJobs, k)
 				logger.Logger().T("remove time out job %v", j)
 			}
-		} /* else {
-			logger.Logger().T("job cant time out %v", j)
-		}*/
+		}
 	}
 }
 
