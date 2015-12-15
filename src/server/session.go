@@ -116,7 +116,7 @@ func (session *Session) handleConnection(server *Server, conn net.Conn) {
 			sendReply(inbox, JOB_CREATED, [][]byte{[]byte(handle.(string)), args[1]})
 			break
 		case WORK_DATA, WORK_WARNING, WORK_COMPLETE,
-			WORK_FAIL, WORK_EXCEPTION:
+			WORK_FAIL, WORK_EXCEPTION, WORK_STATUS:
 			if session.w == nil {
 				logger.Logger().W("can't perform %s, need send CAN_DO first", CmdDescription(tp))
 				return

@@ -346,7 +346,7 @@ func (server *Server) handleWorkReport(e *Event) {
 	if !ok {
 		logger.Logger().W("job lost:%v  handle %v", CmdDescription(e.tp), jobhandle)
 		return
-	} else if e.tp != WORK_DATA {
+	} else if e.tp != WORK_DATA && e.tp != WORK_STATUS {
 		delete(server.workJobs, jobhandle)
 	}
 
