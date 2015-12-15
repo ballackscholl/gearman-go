@@ -86,7 +86,7 @@ func (server *Server) GetFuncWorkerStatus() string {
 		}
 		buffer.WriteString(fmt.Sprintf("func %v to %v[", key, to))
 		for it := jw.Workers.Front(); it != nil; it = it.Next() {
-			buffer.WriteString(fmt.Sprintf("id:%v cid:%v ip:%v stats:%v,", it.Value.(*Worker).Connector.SessionId,
+			buffer.WriteString(fmt.Sprintf("id:%v cid:%v ip:%v stats:%v,\n", it.Value.(*Worker).Connector.SessionId,
 				it.Value.(*Worker).workerId,
 				it.Value.(*Worker).Conn.RemoteAddr(),
 				it.Value.(*Worker).status))
@@ -100,7 +100,7 @@ func (server *Server) GetWorkerStatus() string {
 	var buffer bytes.Buffer
 	buffer.WriteString("work[")
 	for key, clt := range server.worker {
-		buffer.WriteString(fmt.Sprintf("id:%v cid:%v ip:%v stats:%v,", key, clt.workerId,
+		buffer.WriteString(fmt.Sprintf("id:%v cid:%v ip:%v stats:%v,\n", key, clt.workerId,
 			clt.Conn.RemoteAddr(), clt.status))
 	}
 	buffer.WriteString("]\n")
@@ -111,7 +111,7 @@ func (server *Server) GetClientStatus() string {
 	var buffer bytes.Buffer
 	buffer.WriteString("client[")
 	for key, wk := range server.client {
-		buffer.WriteString(fmt.Sprintf("id:%v ip:%v,", key,
+		buffer.WriteString(fmt.Sprintf("id:%v ip:%v,\n", key,
 			wk.Conn.RemoteAddr()))
 	}
 	buffer.WriteString("]\n")
