@@ -110,7 +110,7 @@ func (session *Session) handleConnection(server *Server, conn net.Conn) {
 				args:   &Tuple{t0: session.c, t1: args[0], t2: args[1], t3: args[2]},
 				result: createResCh(),
 			}
-			logger.Logger().T("submit handler:%v func:%s uniq:%s", sessionId, args[0], args[1])
+
 			server.protoEvtCh <- e
 			handle := <-e.result
 			sendReply(inbox, JOB_CREATED, [][]byte{[]byte(handle.(string)), args[1]})

@@ -80,8 +80,10 @@ func (server *Server) GetFuncWorkerStatus() string {
 		}
 		buffer.WriteString(fmt.Sprintf("func %v to %v[", key, to))
 		for it := jw.Workers.Front(); it != nil; it = it.Next() {
-			buffer.WriteString(fmt.Sprintf("id:%v ip:%v,", it.Value.(*Worker).Connector.SessionId,
-				it.Value.(*Worker).Conn.RemoteAddr()))
+			buffer.WriteString(fmt.Sprintf("id:%v cid:%v ip:%v stats:%v,", it.Value.(*Worker).Connector.SessionId,
+				it.Value.(*Worker).workerId,
+				it.Value.(*Worker).Conn.RemoteAddr(),
+				it.Value.(*Worker).status)
 		}
 		buffer.WriteString("]\n")
 	}
@@ -92,8 +94,8 @@ func (server *Server) GetWorkerStatus() string {
 	var buffer bytes.Buffer
 	buffer.WriteString("work[")
 	for key, clt := range server.worker {
-		buffer.WriteString(fmt.Sprintf("id:%v ip:%v,", key,
-			clt.Conn.RemoteAddr()))
+		buffer.WriteString(fmt.Sprintf("id:%v cid:%v ip:%v stats:%v,", key, clt.workerId,
+			clt.Conn.RemoteAddr(), clt.status))
 	}
 	buffer.WriteString("]\n")
 	return buffer.String()
@@ -196,6 +198,7 @@ func (server *Server) handleCanDo(funcName string, w *Worker, timeout int) {
 	server.funcTimeout[funcName] = timeout
 	w.canDo[funcName] = true
 
+	logger.Logger().T("can do func:%v sessionId:%v", funcName, w.SessionId)
 }
 
 func (server *Server) addFuncJobStore(funcName string) storage.JobQueue {
@@ -210,6 +213,7 @@ func (server *Server) addFuncJobStore(funcName string) storage.JobQueue {
 	queue.Initial(funcName)
 	server.jobStores[funcName] = queue
 
+	logger.Logger().T("addFuncJobStore:%v", funcName)
 	return queue
 }
 
@@ -219,6 +223,7 @@ func (server *Server) removeCanDo(funcName string, sessionId int64) {
 		server.removeWorker(jw.Workers, sessionId)
 	}
 
+	logger.Logger().T("removeCanDo:%v sessionId:%v", funcName, sessionId)
 	delete(server.worker[sessionId].canDo, funcName)
 }
 
@@ -253,6 +258,7 @@ func (server *Server) popJob(sessionId int64) *Job {
 
 			jb := queue.PopJob()
 			if jb != nil {
+				logger.Logger().T("pop job work:%v job:%v", sessionId, jb.Handle)
 				return jb
 			}
 		}
@@ -269,7 +275,7 @@ func (server *Server) wakeupWorker(funcName string, w *Worker) bool {
 		return false
 	}
 
-	logger.Logger().T("wakeup sessionId: %v", w.SessionId)
+	logger.Logger().T("wakeup sessionId: %v %v", w.SessionId, w.workerId)
 	w.Send(wakeupReply)
 	return true
 }
@@ -294,7 +300,8 @@ func (server *Server) handleSubmitJob(e *Event) {
 
 	j.IsBackGround = isBackGround(e.tp)
 
-	logger.Logger().T("add job %+v", j)
+	logger.Logger().T("%v func:%v uniq:%v info:%+v", CmdDescription(e.tp), 
+		args.t1.(string), args.t2.(string), j)
 
 	j.Priority = cmd2Priority(e.tp)
 
@@ -387,6 +394,11 @@ func (server *Server) handleCloseSession(e *Event) {
 	e.result <- true
 }
 
+func (server *Server) setClientId(clientId string, w *Worker) {
+	logger.Logger().T("setClientId sid:%v cid:%v", w.SessionId, clientId)
+	w.workerId = clientId
+}
+
 func (server *Server) handleCtrlEvt(e *Event) {
 
 	switch e.tp {
@@ -425,6 +437,7 @@ func (server *Server) handleProtoEvt(e *Event) {
 			logger.Logger().W("timeout conv error, funcName %v", funcName)
 		}
 		server.handleCanDo(funcName, w, timeout)
+		server.addFuncJobStore(funcName)
 		break
 	case CANT_DO:
 		sessionId := e.fromSessionId
@@ -432,8 +445,7 @@ func (server *Server) handleProtoEvt(e *Event) {
 		server.removeCanDo(funcName, sessionId)
 		break
 	case SET_CLIENT_ID:
-		w := args.t0.(*Worker)
-		w.workerId = args.t1.(string)
+		server.setClientId(args.t1.(string), args.t0.(*Worker))
 		break
 	case GRAB_JOB, GRAB_JOB_UNIQ:
 
@@ -467,7 +479,7 @@ func (server *Server) handleProtoEvt(e *Event) {
 			break
 		}
 		w.status = wsSleep
-		logger.Logger().T("worker sessionId %d sleep", sessionId)
+		logger.Logger().T("worker sessionId %v %v sleep", sessionId, w.workerId)
 		//check if there are any jobs for this worker
 		for k, v := range w.canDo {
 			if v && server.wakeupWorker(k, w) {
