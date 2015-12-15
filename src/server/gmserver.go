@@ -237,7 +237,7 @@ func (server *Server) removeWorkerBySessionId(sessionId int64) {
 func (server *Server) removeWorker(l *list.List, sessionId int64) {
 	for it := l.Front(); it != nil; it = it.Next() {
 		if it.Value.(*Worker).SessionId == sessionId {
-			logger.Logger().T("removeWorker sessionId %v", sessionId)
+			logger.Logger().T("removeWorker sessionId %v %v", sessionId,  it.Value.(*Worker).workerId)
 			l.Remove(it)
 			return
 		}
