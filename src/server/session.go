@@ -28,6 +28,13 @@ func (session *Session) getWorker(sessionId int64, inbox chan []byte, conn net.C
 
 func (session *Session) handleConnection(server *Server, conn net.Conn) {
 
+	conn.(*net.TCPConn).SetNoDelay(true)
+	conn.(*net.TCPConn).SetLinger(-1)
+	conn.(*net.TCPConn).SetReadBuffer(20 * 1024)
+	conn.(*net.TCPConn).SetWriteBuffer(20 * 1024)
+	conn.(*net.TCPConn).SetKeepAlive(true)
+	conn.(*net.TCPConn).SetKeepAlivePeriod(time.Duration(server.GetKeepAlive() * 60000000000))
+
 	sessionId := server.allocSessionId()
 	inbox := make(chan []byte, 256)
 
@@ -42,7 +49,7 @@ func (session *Session) handleConnection(server *Server, conn net.Conn) {
 	}()
 
 	go writer(conn, inbox)
-	r := bufio.NewReaderSize(conn, 64*1024)
+	r := bufio.NewReaderSize(conn, 20*1024)
 
 	for {
 		tp, buf, err := ReadMessage(r)

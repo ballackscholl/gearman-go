@@ -11,11 +11,12 @@ import (
 )
 
 var (
-	addr     *string = flag.String("addr", ":4730", "listening on, such as :4730")
-	monAddr  *string = flag.String("mon", ":1374", "listening on, such as :1374")
-	logLevel *string = flag.String("verbose", "info", "log level, such as:trace info warn error")
-	tryTimes *int    = flag.Int("trytime", 2, "wake worker try times if equal 0 wake all sleep worker")
-	isDaemon *bool   = flag.Bool("d", false, "make process daemon")
+	addr      *string = flag.String("addr", ":4730", "listening on, such as :4730")
+	monAddr   *string = flag.String("mon", ":1374", "listening on, such as :1374")
+	logLevel  *string = flag.String("verbose", "info", "log level, such as:trace info warn error")
+	tryTimes  *int    = flag.Int("trytime", 2, "wake worker try times if equal 0 wake all sleep worker")
+	isDaemon  *bool   = flag.Bool("d", false, "make process daemon")
+	keepAlive *int64  = flag.Int64("keepalive", 3, "keepalive Minute")
 )
 
 func daemon(nochdir, noclose int) int {
@@ -84,12 +85,12 @@ func main() {
 	runtime.GOMAXPROCS(1)
 	logger.Initialize(*addr, *logLevel)
 
-	logger.Logger().I("gm server start up!!!! addr:%v mon:%v verbose:%v trytime:%v daemon:%v",
-		*addr, *monAddr, *logLevel, *tryTimes, *isDaemon)
+	logger.Logger().I("gm server start up!!!! addr:%v mon:%v verbose:%v trytime:%v daemon:%v keepalive:%v",
+		*addr, *monAddr, *logLevel, *tryTimes, *isDaemon, *keepAlive)
 
 	if *isDaemon {
 		daemon(1, 0)
 	}
 
-	gearmand.NewServer(*tryTimes).Start(*addr, *monAddr)
+	gearmand.NewServer(*tryTimes, *keepAlive).Start(*addr, *monAddr)
 }

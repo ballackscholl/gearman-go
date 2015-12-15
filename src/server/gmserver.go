@@ -36,6 +36,7 @@ type Server struct {
 	protoEvtCh     chan *Event
 	startSessionId int64
 	tryTimes       int
+	keepalive      int64
 	funcWorker     map[string]*JobWorkerMap
 	worker         map[int64]*Worker
 	client         map[int64]*Client
@@ -44,7 +45,7 @@ type Server struct {
 	jobStores      map[string]storage.JobQueue
 }
 
-func NewServer(tryTimes int) *Server {
+func NewServer(tryTimes int, keepalive int64) *Server {
 	return &Server{
 		funcWorker:     make(map[string]*JobWorkerMap),
 		protoEvtCh:     make(chan *Event, 100),
@@ -55,7 +56,12 @@ func NewServer(tryTimes int) *Server {
 		funcTimeout:    make(map[string]int),
 		startSessionId: 0,
 		tryTimes:       tryTimes,
+		keepalive:      keepalive,
 	}
+}
+
+func (server *Server) GetKeepAlive() int64 {
+	return server.keepalive
 }
 
 func (server *Server) GetJobStatus() string {
