@@ -83,7 +83,7 @@ func (server *Server) GetFuncWorkerStatus() string {
 			buffer.WriteString(fmt.Sprintf("id:%v cid:%v ip:%v stats:%v,", it.Value.(*Worker).Connector.SessionId,
 				it.Value.(*Worker).workerId,
 				it.Value.(*Worker).Conn.RemoteAddr(),
-				it.Value.(*Worker).status)
+				it.Value.(*Worker).status))
 		}
 		buffer.WriteString("]\n")
 	}
@@ -237,7 +237,7 @@ func (server *Server) removeWorkerBySessionId(sessionId int64) {
 func (server *Server) removeWorker(l *list.List, sessionId int64) {
 	for it := l.Front(); it != nil; it = it.Next() {
 		if it.Value.(*Worker).SessionId == sessionId {
-			logger.Logger().T("removeWorker sessionId %v %v", sessionId,  it.Value.(*Worker).workerId)
+			logger.Logger().T("removeWorker sessionId %v %v", sessionId, it.Value.(*Worker).workerId)
 			l.Remove(it)
 			return
 		}
@@ -300,7 +300,7 @@ func (server *Server) handleSubmitJob(e *Event) {
 
 	j.IsBackGround = isBackGround(e.tp)
 
-	logger.Logger().T("%v func:%v uniq:%v info:%+v", CmdDescription(e.tp), 
+	logger.Logger().T("%v func:%v uniq:%v info:%+v", CmdDescription(e.tp),
 		args.t1.(string), args.t2.(string), j)
 
 	j.Priority = cmd2Priority(e.tp)
