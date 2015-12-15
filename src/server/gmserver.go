@@ -464,11 +464,12 @@ func (server *Server) handleProtoEvt(e *Event) {
 			j.ProcessAt = time.Now()
 			j.ProcessBy = sessionId
 			server.workJobs[j.Handle] = j
-			e.result <- j
+
 		} else { //no job
 			w.status = wsPrepareForSleep
-			e.result <- nil
+
 		}
+		e.result <- j
 		break
 	case PRE_SLEEP:
 		sessionId := e.fromSessionId

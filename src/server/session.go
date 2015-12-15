@@ -93,7 +93,7 @@ func (session *Session) handleConnection(server *Server, conn net.Conn) {
 				result: createResCh()}
 			server.protoEvtCh <- e
 			job := <-e.result
-			if job == nil {
+			if job.(*Job) == nil {
 				logger.Logger().T("sessionId:%v no job", sessionId)
 				sendReplyResult(inbox, nojobReply)
 				break
