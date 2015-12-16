@@ -2,11 +2,13 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"runtime"
 	gearmand "server"
 	"syscall"
+	"time"
 	"utils/logger"
 )
 
@@ -16,6 +18,7 @@ var (
 	logLevel  *string = flag.String("verbose", "info", "log level, such as:trace info warn error")
 	tryTimes  *int    = flag.Int("trytime", 2, "wake worker try times if equal 0 wake all sleep worker")
 	isDaemon  *bool   = flag.Bool("d", false, "make process daemon")
+	isCore    *bool   = flag.Bool("c", false, "create crash file in deamon mode")
 	keepAlive *int64  = flag.Int64("keepalive", 3, "keepalive Minute")
 )
 
@@ -73,11 +76,28 @@ func daemon(nochdir, noclose int) int {
 			fd := f.Fd()
 			syscall.Dup2(int(fd), int(os.Stdin.Fd()))
 			syscall.Dup2(int(fd), int(os.Stdout.Fd()))
-			syscall.Dup2(int(fd), int(os.Stderr.Fd()))
+			if *isCore {
+				createCoreDump()
+			} else {
+				syscall.Dup2(int(fd), int(os.Stderr.Fd()))
+			}
+		}
+	} else {
+		if *isCore {
+			createCoreDump()
 		}
 	}
 
 	return 0
+}
+
+func createCoreDump() {
+	if crashFile, err := os.OpenFile(fmt.Sprintf("./log/crash%s.log", *addr), os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0664); err == nil {
+		crashFile.WriteString(fmt.Sprintf("pid %d Opened crashfile at %v\n", os.Getpid(), time.Now()))
+		syscall.Dup2(int(crashFile.Fd()), int(os.Stderr.Fd()))
+	} else {
+		log.Printf("Error: syscall.Setsid errno: %v", err.Error())
+	}
 }
 
 func main() {
@@ -85,8 +105,8 @@ func main() {
 	runtime.GOMAXPROCS(1)
 	logger.Initialize(*addr, *logLevel)
 
-	logger.Logger().I("gm server start up!!!! addr:%v mon:%v verbose:%v trytime:%v daemon:%v keepalive:%v",
-		*addr, *monAddr, *logLevel, *tryTimes, *isDaemon, *keepAlive)
+	logger.Logger().I("gm server start up!!!! addr:%v mon:%v verbose:%v trytime:%v daemon:%v keepalive:%v core:%v",
+		*addr, *monAddr, *logLevel, *tryTimes, *isDaemon, *keepAlive, *isCore)
 
 	if *isDaemon {
 		daemon(1, 0)
