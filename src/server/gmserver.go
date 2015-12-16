@@ -131,9 +131,11 @@ func (server *Server) clearTimeoutJob() {
 				c, ok := server.client[j.CreateBy]
 				if ok {
 					c.Send(timeoutReply)
+				} else {
+					logger.Logger().I("client not exist cant send %v", j)
 				}
 				delete(server.workJobs, k)
-				logger.Logger().T("remove time out job %v", j)
+				logger.Logger().I("remove time out job %v", j)
 			}
 		}
 	}
