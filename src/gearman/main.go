@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"runtime"
 	gearmand "server"
 	"utils/logger"
 )
@@ -19,8 +20,8 @@ func main() {
 	runtime.GOMAXPROCS(1)
 	logger.Initialize(*addr, *logLevel)
 
-	logger.Logger().I("gm server start up!!!! addr:%v mon:%v verbose:%v trytime:%v daemon:%v keepalive:%v core:%v",
-		*addr, *monAddr, *logLevel, *tryTimes, *isDaemon, *keepAlive, *isCore)
+	logger.Logger().I("gm server start up!!!! addr:%v mon:%v verbose:%v trytime:%v keepalive:%v",
+		*addr, *monAddr, *logLevel, *tryTimes, *keepAlive)
 
 	gearmand.NewServer(*tryTimes, *keepAlive).Start(*addr, *monAddr)
 }
