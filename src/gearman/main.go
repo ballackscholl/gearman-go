@@ -2,13 +2,7 @@ package main
 
 import (
 	"flag"
-	"fmt"
-	"log"
-	"os"
-	"runtime"
 	gearmand "server"
-	"syscall"
-	"time"
 	"utils/logger"
 )
 
