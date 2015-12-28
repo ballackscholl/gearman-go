@@ -18,7 +18,7 @@ add maintains method
 
 add job durability solution
 
-add multicore  
+add multicore support
 
 
 
