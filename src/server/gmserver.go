@@ -127,7 +127,7 @@ func (server *Server) clearTimeoutJob() {
 	now := time.Now().Unix()
 	for k, j := range server.workJobs {
 		if j.TimeoutSec > 0 {
-			if (j.CreateAt.Unix() + int64(j.TimeoutSec)) > now {
+			if (j.CreateAt.Unix() + int64(j.TimeoutSec)) <= now {
 				c, ok := server.client[j.CreateBy]
 				if ok {
 					c.Send(timeoutReply)
@@ -398,7 +398,7 @@ func (server *Server) handleCloseSession(e *Event) {
 		}
 		server.removeWorkerBySessionId(w.SessionId)
 	} else if c, ok := server.client[sessionId]; ok {
-		logger.Logger().T("removeClient sessionId", sessionId)
+		logger.Logger().T("removeClient sessionId %v", sessionId)
 		delete(server.client, c.SessionId)
 	}
 	e.result <- true
