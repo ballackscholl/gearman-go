@@ -11,8 +11,8 @@ var (
 func init() {
 }
 
-func Initialize(prefix string, logLevel string) {
-	LOGGER = fileLogger.NewDailyLogger("./log", "gearman_"+prefix+".log", "", 300, 5000)
+func Initialize(prefix string, logLevel string, logPath string) {
+	LOGGER = fileLogger.NewDailyLogger(logPath, "gearman_"+prefix+".log", "", 300, 5000)
 
 	switch logLevel {
 	case "trace":
