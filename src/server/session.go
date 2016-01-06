@@ -33,7 +33,7 @@ func (session *Session) handleConnection(server *Server, conn net.Conn) {
 	conn.(*net.TCPConn).SetReadBuffer(20 * 1024)
 	conn.(*net.TCPConn).SetWriteBuffer(20 * 1024)
 	conn.(*net.TCPConn).SetKeepAlive(true)
-	conn.(*net.TCPConn).SetKeepAlivePeriod(time.Duration(server.GetKeepAlive() * 60000000000))
+	conn.(*net.TCPConn).SetKeepAlivePeriod(2 * time.Minute)
 
 	sessionId := server.allocSessionId()
 	inbox := make(chan []byte, 256)
