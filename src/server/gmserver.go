@@ -15,9 +15,8 @@ import (
 )
 
 var ( //const replys, to avoid building it every time
-	wakeupReply  = constructReply(NOOP, nil)
-	nojobReply   = constructReply(NO_JOB, nil)
-	timeoutReply = constructReply(WORK_FAIL, [][]byte{[]byte("job timeout")})
+	wakeupReply = constructReply(NOOP, nil)
+	nojobReply  = constructReply(NO_JOB, nil)
 )
 
 type Tuple struct {
@@ -124,7 +123,7 @@ func (server *Server) clearTimeoutJob() {
 			if (j.CreateAt.Unix() + int64(j.TimeoutSec)) <= now {
 				c, ok := server.client[j.CreateBy]
 				if ok {
-					c.Send(timeoutReply)
+					c.Send(constructReply(WORK_FAIL, [][]byte{[]byte(j.Handle)}))
 				} else {
 					logger.Logger().I("client not exist cant send %v", j)
 				}
