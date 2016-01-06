@@ -123,7 +123,6 @@ func (server *Server) clearTimeoutJob() {
 			if (j.CreateAt.Unix() + int64(j.TimeoutSec)) <= now {
 				c, ok := server.client[j.CreateBy]
 				if ok {
-					logger.Logger().I("clearTimeoutJob: %v", j)
 					c.Send(constructReply(WORK_FAIL, [][]byte{[]byte(j.Handle)}))
 				} else {
 					logger.Logger().I("client not exist cant send %v", j)
