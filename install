@@ -8,7 +8,7 @@ fi
 CURDIR=`pwd`
 GOPATH=${CURDIR}
 export GOPATH
-go build -x -o gearman ./src/gearman/main.go
-mv gearman ./bin
+go build -x -o gearmand ./src/gearman/main.go
+mv gearmand ./bin
 
 echo 'finished'
