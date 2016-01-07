@@ -3,13 +3,11 @@ package memory
 import (
 	. "common"
 	"container/list"
-	"sync"
 )
 
 type MemJobQueue struct {
 	name  string
 	queue *list.List
-	qLock sync.RWMutex
 }
 
 func (m *MemJobQueue) Initial(name string) {
@@ -20,8 +18,6 @@ func (m *MemJobQueue) Initial(name string) {
 }
 
 func (m *MemJobQueue) PushJob(job *Job) {
-	m.qLock.Lock()
-	defer m.qLock.Unlock()
 
 	if job != nil {
 		m.queue.PushBack(job)
@@ -29,9 +25,6 @@ func (m *MemJobQueue) PushJob(job *Job) {
 }
 
 func (m *MemJobQueue) PopJob() *Job {
-
-	m.qLock.Lock()
-	defer m.qLock.Unlock()
 
 	element := m.queue.Back()
 	if element != nil {
@@ -43,9 +36,6 @@ func (m *MemJobQueue) PopJob() *Job {
 }
 
 func (m *MemJobQueue) RemoveJob(handle string) *Job {
-
-	m.qLock.Lock()
-	defer m.qLock.Unlock()
 
 	var job *Job = nil
 
@@ -61,9 +51,5 @@ func (m *MemJobQueue) RemoveJob(handle string) *Job {
 }
 
 func (m *MemJobQueue) Length() int {
-
-	m.qLock.RLock()
-	defer m.qLock.RUnlock()
 	return m.queue.Len()
-
 }

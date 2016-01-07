@@ -57,7 +57,7 @@ func NewServer(tryTimes int) *Server {
 	}
 }
 
-func (server *Server) GetJobStatus() string {
+func (server *Server) getJobStatus(e *Event) {
 	var buffer bytes.Buffer
 	buffer.WriteString("waiting:[")
 	for key, jq := range server.jobStores {
@@ -67,10 +67,10 @@ func (server *Server) GetJobStatus() string {
 
 	buffer.WriteString(fmt.Sprintf("protoEvtCh:%v, working:%v", len(server.protoEvtCh), len(server.workJobs)))
 
-	return buffer.String()
+	e.result <- buffer.String()
 }
 
-func (server *Server) GetFuncWorkerStatus() string {
+func (server *Server) getFuncWorkerStatus(e *Event) {
 	var buffer bytes.Buffer
 	for key, jw := range server.funcWorker {
 		to, ok := server.funcTimeout[key]
@@ -86,10 +86,11 @@ func (server *Server) GetFuncWorkerStatus() string {
 		}
 		buffer.WriteString("]\n")
 	}
-	return buffer.String()
+
+	e.result <- buffer.String()
 }
 
-func (server *Server) GetWorkerStatus() string {
+func (server *Server) getWorkerStatus(e *Event) {
 	var buffer bytes.Buffer
 	buffer.WriteString("work[")
 	for key, clt := range server.worker {
@@ -97,10 +98,11 @@ func (server *Server) GetWorkerStatus() string {
 			clt.Conn.RemoteAddr(), clt.status))
 	}
 	buffer.WriteString("]\n")
-	return buffer.String()
+
+	e.result <- buffer.String()
 }
 
-func (server *Server) GetClientStatus() string {
+func (server *Server) getClientStatus(e *Event) {
 	var buffer bytes.Buffer
 	buffer.WriteString("client[")
 	for key, wk := range server.client {
@@ -108,7 +110,8 @@ func (server *Server) GetClientStatus() string {
 			wk.Conn.RemoteAddr()))
 	}
 	buffer.WriteString("]\n")
-	return buffer.String()
+
+	e.result <- buffer.String()
 }
 
 func (server *Server) allocSessionId() int64 {
@@ -408,6 +411,18 @@ func (server *Server) handleCtrlEvt(e *Event) {
 	switch e.tp {
 	case ctrlCloseSession:
 		server.handleCloseSession(e)
+		return
+	case getJobStatus:
+		server.getJobStatus(e)
+		return
+	case getFuncWorkerStatus:
+		server.getFuncWorkerStatus(e)
+		return
+	case getWorkerStatus:
+		server.getWorkerStatus(e)
+		return
+	case getClientStatus:
+		server.getClientStatus(e)
 		return
 	default:
 		logger.Logger().W("%s, %d", CmdDescription(e.tp), e.tp)

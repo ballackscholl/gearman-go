@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	version = "1.0.0.1"
+	version = "1.0.0.2"
 )
 
 var (
@@ -16,16 +16,27 @@ var (
 	monAddr  *string = flag.String("mon", ":5730", "listening on, such as :5730")
 	logLevel *string = flag.String("verbose", "info", "log level, such as:trace info warn error")
 	tryTimes *int    = flag.Int("trytime", 2, "wake worker try times if equal 0 wake all sleep worker")
-	logPath  *string = flag.String("logpath", "./", "log path default ./")
+	logPath  *string = flag.String("logpath", "./", "log path")
+	maxProc  *int    = flag.Int("prosize", 1, " process size, if <=0 it is going to CPU num")
 )
 
 func main() {
 	flag.Parse()
-	runtime.GOMAXPROCS(1)
+
+	procSize := 1
+	cpuNum := runtime.NumCPU()
+
+	if *maxProc <= 0 || *maxProc > cpuNum {
+		procSize = cpuNum
+	} else {
+		procSize = *maxProc
+	}
+
+	runtime.GOMAXPROCS(procSize)
 	logger.Initialize(*addr, *logLevel, *logPath)
 
-	logger.Logger().I("gm server start up!!!! version:%v addr:%v mon:%v verbose:%v trytime:%v logpath:%v",
-		version, *addr, *monAddr, *logLevel, *tryTimes, *logPath)
+	logger.Logger().I("gm server start up!!!! version:%v addr:%v mon:%v verbose:%v trytime:%v logpath:%v process size:%v",
+		version, *addr, *monAddr, *logLevel, *tryTimes, *logPath, procSize)
 
 	gearmand.NewServer(*tryTimes).Start(*addr, *monAddr)
 }

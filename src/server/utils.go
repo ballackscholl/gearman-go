@@ -21,8 +21,10 @@ var (
 
 const (
 	ctrlCloseSession = 1000 + iota
-	ctrlGetJob
-	ctrlGetWorker
+	getJobStatus
+	getFuncWorkerStatus
+	getWorkerStatus
+	getClientStatus
 )
 
 var (
