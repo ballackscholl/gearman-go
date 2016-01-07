@@ -66,12 +66,12 @@ func (session *Session) handleConnection(server *Server, conn net.Conn) {
 		logger.Logger().T("sessionId:%v tp:%v", sessionId, CmdDescription(tp))
 
 		switch tp {
-		case CAN_DO: //todo: CAN_DO_TIMEOUT timeout support
+		case CAN_DO:
 			session.w = session.getWorker(sessionId, inbox, conn)
 			server.protoEvtCh <- &Event{tp: tp, args: &Tuple{
 				t0: session.w, t1: string(args[0])}}
 			break
-		case CAN_DO_TIMEOUT: //todo: CAN_DO_TIMEOUT timeout support
+		case CAN_DO_TIMEOUT:
 			session.w = session.getWorker(sessionId, inbox, conn)
 			server.protoEvtCh <- &Event{tp: tp, args: &Tuple{
 				t0: session.w, t1: string(args[0]), t2: string(args[1])}}
