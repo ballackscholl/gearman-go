@@ -7,6 +7,10 @@ import (
 	"utils/logger"
 )
 
+const (
+	version = "1.0.0.1"
+)
+
 var (
 	addr     *string = flag.String("addr", ":4730", "listening on, such as :4730")
 	monAddr  *string = flag.String("mon", ":5730", "listening on, such as :5730")
@@ -20,8 +24,8 @@ func main() {
 	runtime.GOMAXPROCS(1)
 	logger.Initialize(*addr, *logLevel, *logPath)
 
-	logger.Logger().I("gm server start up!!!! addr:%v mon:%v verbose:%v trytime:%v logpath:%v",
-		*addr, *monAddr, *logLevel, *tryTimes, *logPath)
+	logger.Logger().I("gm server start up!!!! version:%v addr:%v mon:%v verbose:%v trytime:%v logpath:%v",
+		version, *addr, *monAddr, *logLevel, *tryTimes, *logPath)
 
 	gearmand.NewServer(*tryTimes).Start(*addr, *monAddr)
 }

@@ -9,7 +9,7 @@ import (
 type MemJobQueue struct {
 	name  string
 	queue *list.List
-	qLock sync.Mutex
+	qLock sync.RWMutex
 }
 
 func (m *MemJobQueue) Initial(name string) {
@@ -62,6 +62,8 @@ func (m *MemJobQueue) RemoveJob(handle string) *Job {
 
 func (m *MemJobQueue) Length() int {
 
+	m.qLock.RLock()
+	defer m.qLock.RUnlock()
 	return m.queue.Len()
 
 }
