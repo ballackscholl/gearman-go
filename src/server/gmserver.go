@@ -137,7 +137,7 @@ func (server *Server) clearTimeoutJob() {
 func (server *Server) Start(addr string, monAddr string) {
 	ln, err := net.Listen("tcp", addr)
 	if err != nil {
-		logger.Logger().E("%v", err)
+		logger.Logger().E("listen %v", err)
 	}
 
 	logger.Logger().I("listening on %v", addr)
@@ -148,6 +148,7 @@ func (server *Server) Start(addr string, monAddr string) {
 	for {
 		conn, err := ln.Accept()
 		if err != nil { // handle error
+			logger.Logger().E("accept %v", err)
 			continue
 		}
 
