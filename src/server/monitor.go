@@ -20,14 +20,14 @@ func registerWebHandler(s *Server, addr string) {
 
 	m := martini.Classic()
 
-	m.Get("/pprof", pprof.Index)
-	m.Get("/pprof/cmdline", pprof.Cmdline)
-	m.Get("/pprof/profile", pprof.Profile)
-	m.Get("/pprof/symbol", pprof.Symbol)
-	m.Get("/pprof/block", pprof.Handler("block").ServeHTTP)
-	m.Get("/pprof/heap", pprof.Handler("heap").ServeHTTP)
-	m.Get("/pprof/goroutine", pprof.Handler("goroutine").ServeHTTP)
-	m.Get("/pprof/threadcreate", pprof.Handler("threadcreate").ServeHTTP)
+	m.Get("/", pprof.Index)
+	m.Get("/cmdline", pprof.Cmdline)
+	m.Get("/profile", pprof.Profile)
+	m.Get("/symbol", pprof.Symbol)
+	m.Get("/block", pprof.Handler("block").ServeHTTP)
+	m.Get("/heap", pprof.Handler("heap").ServeHTTP)
+	m.Get("/goroutine", pprof.Handler("goroutine").ServeHTTP)
+	m.Get("/threadcreate", pprof.Handler("threadcreate").ServeHTTP)
 	m.Get("/status/func", func(params martini.Params) string {
 		e := &Event{tp: getJobStatus, result: createResCh()}
 		s.protoEvtCh <- e
