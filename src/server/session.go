@@ -36,7 +36,7 @@ func (session *Session) handleConnection(server *Server, conn net.Conn) {
 	conn.(*net.TCPConn).SetKeepAlivePeriod(2 * time.Minute)
 
 	sessionId := server.allocSessionId()
-	inbox := make(chan []byte, 256)
+	inbox := make(chan []byte, 2048)
 
 	defer func() {
 		if session.w != nil || session.c != nil {
@@ -126,12 +126,12 @@ func (session *Session) handleConnection(server *Server, conn net.Conn) {
 			}
 			e := &Event{tp: tp,
 				args:   &Tuple{t0: session.c, t1: args[0], t2: args[1], t3: args[2]},
-				result: createResCh(),
+				//result: createResCh(),
 			}
 
 			server.protoEvtCh <- e
-			handle := <-e.result
-			sendReply(inbox, JOB_CREATED, [][]byte{[]byte(handle.(string)), args[1]})
+			//handle := <-e.result
+			//sendReply(inbox, JOB_CREATED, [][]byte{[]byte(handle.(string)), args[1]})
 			break
 		case WORK_DATA, WORK_WARNING, WORK_COMPLETE,
 			WORK_FAIL, WORK_EXCEPTION, WORK_STATUS:

@@ -312,7 +312,8 @@ func (server *Server) handleSubmitJob(e *Event) {
 
 	j.Priority = cmd2Priority(e.tp)
 
-	e.result <- j.Handle
+	//e.result <- j.Handle
+	sendReply(c.in, JOB_CREATED, [][]byte{[]byte(j.Handle), []byte(j.Id)})
 
 	server.doAddJob(j)
 }
