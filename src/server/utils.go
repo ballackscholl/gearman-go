@@ -221,7 +221,7 @@ func writer(conn net.Conn, outbox chan []byte) {
 				b.Write(<-outbox)
 			}
 
-			conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
+			conn.SetWriteDeadline(time.Now().Add(2 * time.Second))
 			_, err := conn.Write(b.Bytes())
 			if err != nil {
 				return
