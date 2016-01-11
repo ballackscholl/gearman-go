@@ -5,7 +5,6 @@ import (
 	. "common"
 	"net"
 	"time"
-	//"runtime"
 	"utils/logger"
 )
 
@@ -146,6 +145,5 @@ func (session *Session) handleConnection(server *Server, conn net.Conn) {
 		default:
 			logger.Logger().W("not support type %s", CmdDescription(tp))
 		}
-		//runtime.Gosched()
 	}
 }
