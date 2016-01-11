@@ -18,6 +18,7 @@ var (
 	tryTimes *int    = flag.Int("trytime", 2, "wake worker try times if equal 0 wake all sleep worker")
 	logPath  *string = flag.String("logpath", "./", "log path")
 	maxProc  *int    = flag.Int("prosize", 1, " process size, if <=0 it is going to CPU num")
+	lockMainProcess *bool = flag.Bool("lock", false, "lock EvtLoop process on specific cpu")
 )
 
 func main() {
@@ -35,8 +36,9 @@ func main() {
 	runtime.GOMAXPROCS(procSize)
 	logger.Initialize(*addr, *logLevel, *logPath)
 
-	logger.Logger().I("gm server start up!!!! version:%v addr:%v mon:%v verbose:%v trytime:%v logpath:%v process size:%v",
-		version, *addr, *monAddr, *logLevel, *tryTimes, *logPath, procSize)
+	logger.Logger().I("gm server start up!!!! version:%v addr:%v mon:%v verbose:%v trytime:%v logpath:%v process size:%v lock:%v",
+		version, *addr, *monAddr, *logLevel, *tryTimes, *logPath, procSize,
+		*lockMainProcess)
 
-	gearmand.NewServer(*tryTimes).Start(*addr, *monAddr)
+	gearmand.NewServer(*tryTimes, procSize, *lockMainProcess).Start(*addr, *monAddr)
 }

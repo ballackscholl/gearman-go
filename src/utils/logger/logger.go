@@ -2,6 +2,7 @@ package logger
 
 import (
 	"github.com/aiwuTech/fileLogger"
+	"strings"
 )
 
 var (
@@ -12,7 +13,9 @@ func init() {
 }
 
 func Initialize(prefix string, logLevel string, logPath string) {
-	LOGGER = fileLogger.NewDailyLogger(logPath, "gearman_"+prefix+".log", "", 300, 5000)
+
+	prefix = strings.Replace(prefix, ":", "", -1)
+	LOGGER = fileLogger.NewDailyLogger(logPath, "gearman_" + prefix + ".log", "", 300, 5000)
 
 	switch logLevel {
 	case "trace":

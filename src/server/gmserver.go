@@ -10,6 +10,7 @@ import (
 	"storage/memory"
 	"strconv"
 	"sync/atomic"
+	"runtime"
 	"time"
 	"utils/logger"
 )
@@ -35,6 +36,8 @@ type Server struct {
 	protoEvtCh     chan *Event
 	startSessionId int64
 	tryTimes       int
+	maxProc		int
+	lockMainProcess bool
 	funcWorker     map[string]*JobWorkerMap
 	worker         map[int64]*Worker
 	client         map[int64]*Client
@@ -43,7 +46,7 @@ type Server struct {
 	jobStores      map[string]storage.JobQueue
 }
 
-func NewServer(tryTimes int) *Server {
+func NewServer(tryTimes int, maxProc int, lockMainProcess bool) *Server {
 	return &Server{
 		funcWorker:     make(map[string]*JobWorkerMap),
 		protoEvtCh:     make(chan *Event, 256),
@@ -54,6 +57,8 @@ func NewServer(tryTimes int) *Server {
 		funcTimeout:    make(map[string]int),
 		startSessionId: 0,
 		tryTimes:       tryTimes,
+		maxProc: maxProc,
+		lockMainProcess: lockMainProcess,
 	}
 }
 
@@ -161,6 +166,10 @@ func (server *Server) Start(addr string, monAddr string) {
 }
 
 func (server *Server) EvtLoop() {
+	if server.maxProc > 1 && server.lockMainProcess {
+		logger.Logger().I("EvtLoop LockOSThread")
+		runtime.LockOSThread()
+	}
 	tick := time.NewTicker(2 * time.Second)
 	for {
 		select {
