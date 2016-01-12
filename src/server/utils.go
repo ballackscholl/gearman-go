@@ -30,7 +30,6 @@ const (
 var (
 	startJid  int64 = 0
 	respMagic       = []byte(common.ResStr)
-	jidCh           = make(chan string, 50)
 )
 
 func validProtocolDef() {
@@ -51,7 +50,7 @@ func genJid() string {
 }
 
 func allocJobId() string {
-	return <-jidCh
+	return genJid()
 }
 
 func decodeArgs(cmd uint32, buf []byte) ([][]byte, bool) {
@@ -270,9 +269,4 @@ func isBackGround(cmd uint32) bool {
 
 func init() {
 	validProtocolDef()
-	go func() {
-		for {
-			jidCh <- genJid()
-		}
-	}()
 }
