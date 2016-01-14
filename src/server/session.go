@@ -105,7 +105,7 @@ func (session *Session) handleConnection(server *Server, conn net.Conn) {
 				sendReplyResult(inbox, nojobReply)
 				break
 			}
-			logger.Logger().T("grap %v %v", sessionId, job.(*Job))
+			logger.Logger().T("grab %v %v", sessionId, job.(*Job))
 			if tp == GRAB_JOB {
 				sendReply(inbox, JOB_ASSIGN, [][]byte{
 					[]byte(job.(*Job).Handle),

@@ -336,8 +336,9 @@ func (server *Server) doAddJob(j *Job) {
 	if ok {
 		var i int = 0
 		for it := workers.Workers.Front(); it != nil; it = it.Next() {
-			server.wakeupWorker(j.FuncName, it.Value.(*Worker))
-			i++
+			if server.wakeupWorker(j.FuncName, it.Value.(*Worker)){
+				i++
+			}
 			if server.tryTimes > 0 && i >= server.tryTimes {
 				break
 			}
@@ -375,7 +376,7 @@ func (server *Server) handleWorkReport(e *Event) {
 		logger.Logger().E("job handle not match")
 	}
 
-	checkAndRemoveJob(e.tp, j)
+	server.checkAndRemoveJob(e.tp, j)
 
 	if WORK_STATUS == e.tp {
 		j.Percent, _ = strconv.Atoi(string(slice[1]))
