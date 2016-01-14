@@ -362,7 +362,6 @@ func (server *Server) handleWorkReport(e *Event) {
 	args := e.args
 	slice := args.t0.([][]byte)
 	jobhandle := bytes2str(slice[0])
-	//sessionId := e.fromSessionId
 
 	logger.Logger().T("%v job handle %v", CmdDescription(e.tp), jobhandle)
 
@@ -370,13 +369,13 @@ func (server *Server) handleWorkReport(e *Event) {
 	if !ok {
 		logger.Logger().W("job lost:%v  handle %v", CmdDescription(e.tp), jobhandle)
 		return
-	} else if e.tp != WORK_DATA && e.tp != WORK_STATUS {
-		delete(server.workJobs, jobhandle)
-	}
+	} 
 
 	if j.Handle != jobhandle {
 		logger.Logger().E("job handle not match")
 	}
+
+	checkAndRemoveJob(e.tp, j)
 
 	if WORK_STATUS == e.tp {
 		j.Percent, _ = strconv.Atoi(string(slice[1]))
