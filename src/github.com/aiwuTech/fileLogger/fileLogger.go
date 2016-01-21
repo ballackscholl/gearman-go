@@ -268,10 +268,7 @@ func (f *FileLogger) fileMonitor() {
 		}
 	}()
 
-	//TODO  load logScan interval from config file
-	logScan := DEFAULT_LOG_SCAN
-
-	timer := time.NewTicker(time.Duration(logScan) * time.Second)
+	timer := time.NewTicker(time.Duration(f.logScan) * time.Second)
 	for {
 		select {
 		case <-timer.C:
