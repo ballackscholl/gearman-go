@@ -10,4 +10,5 @@ type JobQueue interface {
 	PopJob() *Job
 	RemoveJob(handle string) *Job
 	Length() int
+	Show() string
 }

@@ -72,7 +72,25 @@ func (server *Server) getJobStatus(e *Event) {
 
 	buffer.WriteString(fmt.Sprintf("protoEvtCh:%v, working:%v", len(server.protoEvtCh), len(server.workJobs)))
 
+	for k, j := range server.workJobs {
+		buffer.WriteString(fmt.Sprintf("\n %v:%v,", k, j))
+	}
+
 	e.result <- buffer.String()
+}
+
+func (server *Server) removeJobDirect(e *Event) {
+
+	_, ok := server.workJobs[e.args.t0.(string)]
+	if ok {
+		logger.Logger().I("remove job %v", e.args.t0.(string))
+		delete(server.workJobs, e.args.t0.(string))
+		e.result <- fmt.Sprintf("deleted %v yet", e.args.t0.(string))
+		return
+	}else{
+		e.result <- fmt.Sprintf("not found %v", e.args.t0.(string))
+		return
+	}
 }
 
 func (server *Server) getFuncWorkerStatus(e *Event) {
@@ -433,6 +451,9 @@ func (server *Server) handleCtrlEvt(e *Event) {
 		return
 	case getClientStatus:
 		server.getClientStatus(e)
+		return
+	case removeJob:
+		server.removeJobDirect(e)
 		return
 	default:
 		logger.Logger().W("%s, %d", CmdDescription(e.tp), e.tp)

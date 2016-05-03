@@ -48,5 +48,16 @@ func registerWebHandler(s *Server, addr string) {
 		s.protoEvtCh <- e
 		return (<-e.result).(string)
 	})
+	m.Get("/status/rmjob/:id", func(params martini.Params) string {
+
+		id, ok := params["id"]
+		if !ok {
+			return "params error"
+		}
+
+		e := &Event{tp: removeJob, result: createResCh(), args: &Tuple{t0: id}}
+		s.protoEvtCh <- e
+		return (<-e.result).(string)
+	})
 	logger.Logger().E("%v", http.ListenAndServe(addr, m))
 }

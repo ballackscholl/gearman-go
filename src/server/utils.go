@@ -25,6 +25,7 @@ const (
 	getFuncWorkerStatus
 	getWorkerStatus
 	getClientStatus
+	removeJob
 )
 
 var (

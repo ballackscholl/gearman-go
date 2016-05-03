@@ -2,6 +2,8 @@ package memory
 
 import (
 	. "common"
+	"bytes"
+	"fmt"
 	"container/list"
 )
 
@@ -48,6 +50,17 @@ func (m *MemJobQueue) RemoveJob(handle string) *Job {
 	}
 
 	return job
+}
+
+func (m *MemJobQueue) Show() string{
+
+	var buffer bytes.Buffer
+
+	for e := m.queue.Front(); e != nil; e = e.Next() {
+		buffer.WriteString(fmt.Sprintf("%v\n", e))
+	}
+
+	return buffer.String()
 }
 
 func (m *MemJobQueue) Length() int {
