@@ -205,7 +205,11 @@ func readHeader(r io.Reader) (magic uint32, tp uint32, size uint32, err error) {
 
 func writer(conn net.Conn, outbox chan []byte) {
 	defer func() {
-		conn.Close()
+		logger.Logger().I("writer close connection %v", conn)
+		err := conn.Close()
+		if err != nil{
+			logger.Logger().W("writer close connection error %v, %v", conn, err)
+		}
 	}()
 
 	b := bytes.NewBuffer(nil)

@@ -45,6 +45,12 @@ func (session *Session) handleConnection(server *Server, conn net.Conn) {
 			server.protoEvtCh <- e
 			<-e.result
 			close(inbox) //notify writer to quit
+		}else{
+			logger.Logger().I("close connection %v", conn)
+			err := conn.Close()
+			if err != nil{
+				logger.Logger().W("close connection error %v, %v", conn, err)
+			}
 		}
 	}()
 
