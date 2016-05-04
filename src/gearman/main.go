@@ -19,6 +19,7 @@ var (
 	logPath  *string = flag.String("logpath", "./", "log path")
 	maxProc  *int    = flag.Int("prosize", 1, " process size, if <=0 it is going to CPU num")
 	lockMainProcess *bool = flag.Bool("lock", false, "lock EvtLoop process on specific cpu")
+	protoEvtChSize *int = flag.Int("protochannel", 256, "protochannel size default 256")
 )
 
 func main() {
@@ -33,12 +34,16 @@ func main() {
 		procSize = *maxProc
 	}
 
+	if *protoEvtChSize <=0 {
+		*protoEvtChSize = 256
+	}
+
 	runtime.GOMAXPROCS(procSize)
 	logger.Initialize(*addr, *logLevel, *logPath)
 
-	logger.Logger().I("gm server start up!!!! version:%v addr:%v mon:%v verbose:%v trytime:%v logpath:%v process size:%v lock:%v",
+	logger.Logger().I("gm server start up!!!! version:%v addr:%v mon:%v verbose:%v trytime:%v logpath:%v process size:%v lock:%v proto size:%v",
 		version, *addr, *monAddr, *logLevel, *tryTimes, *logPath, procSize,
-		*lockMainProcess)
+		*lockMainProcess, *protoEvtChSize)
 
-	gearmand.NewServer(*tryTimes, procSize, *lockMainProcess).Start(*addr, *monAddr)
+	gearmand.NewServer(*tryTimes, procSize, *lockMainProcess, *protoEvtChSize).Start(*addr, *monAddr)
 }

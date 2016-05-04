@@ -46,10 +46,10 @@ type Server struct {
 	jobStores      map[string]storage.JobQueue
 }
 
-func NewServer(tryTimes int, maxProc int, lockMainProcess bool) *Server {
+func NewServer(tryTimes int, maxProc int, lockMainProcess bool, protoEvtChSize int) *Server {
 	return &Server{
 		funcWorker:     make(map[string]*JobWorkerMap),
-		protoEvtCh:     make(chan *Event, 256),
+		protoEvtCh:     make(chan *Event, protoEvtChSize),
 		worker:         make(map[int64]*Worker),
 		client:         make(map[int64]*Client),
 		workJobs:       make(map[string]*Job),
