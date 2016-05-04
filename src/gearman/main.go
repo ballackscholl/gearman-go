@@ -41,8 +41,8 @@ func main() {
 	runtime.GOMAXPROCS(procSize)
 	logger.Initialize(*addr, *logLevel, *logPath)
 
-	logger.Logger().I("gm server start up!!!! version:%v addr:%v mon:%v verbose:%v trytime:%v logpath:%v process size:%v lock:%v proto size:%v",
-		version, *addr, *monAddr, *logLevel, *tryTimes, *logPath, procSize,
+	logger.Logger().I("gm server start up!!!! %v version:%v addr:%v mon:%v verbose:%v trytime:%v logpath:%v process size:%v lock:%v proto size:%v",
+		runtime.Version(), version, *addr, *monAddr, *logLevel, *tryTimes, *logPath, procSize,
 		*lockMainProcess, *protoEvtChSize)
 
 	gearmand.NewServer(*tryTimes, procSize, *lockMainProcess, *protoEvtChSize).Start(*addr, *monAddr)
