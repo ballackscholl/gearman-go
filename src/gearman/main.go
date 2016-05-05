@@ -17,7 +17,7 @@ var (
 	logLevel *string = flag.String("verbose", "info", "log level, such as:trace info warn error")
 	tryTimes *int    = flag.Int("trytime", 2, "wake worker try times if equal 0 wake all sleep worker")
 	logPath  *string = flag.String("logpath", "./", "log path")
-	maxProc  *int    = flag.Int("prosize", 1, " process size, if <=0 it is going to CPU num")
+	maxProc  *int    = flag.Int("prosize", runtime.NumCPU(), " process size, if <=0 it is going to CPU num")
 	lockMainProcess *bool = flag.Bool("lock", false, "lock EvtLoop process on specific cpu")
 	protoEvtChSize *int = flag.Int("protochannel", 256, "protochannel size default 256")
 )

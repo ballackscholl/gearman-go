@@ -40,6 +40,7 @@ func (session *Session) handleConnection(server *Server, conn net.Conn) {
 
 	defer func() {
 		if session.w != nil || session.c != nil {
+			logger.Logger().I("close inbox %v", sessionId)
 			e := &Event{tp: ctrlCloseSession, fromSessionId: sessionId,
 				result: createResCh()}
 			server.protoEvtCh <- e
