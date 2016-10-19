@@ -25,6 +25,7 @@ type cmdinfo struct {
 
 type JobWorkerMap struct {
 	Workers *list.List
+	WakeIndex int
 }
 
 var cmdTable = []cmdinfo{

@@ -213,7 +213,7 @@ func (server *Server) addWorker(l *list.List, w *Worker) {
 func (server *Server) getJobWorkPair(funcName string) *JobWorkerMap {
 	jw, ok := server.funcWorker[funcName]
 	if !ok { //create list
-		jw = &JobWorkerMap{Workers: list.New()}
+		jw = &JobWorkerMap{Workers: list.New(), WakeIndex:0}
 		server.funcWorker[funcName] = jw
 	}
 
@@ -351,16 +351,31 @@ func (server *Server) doAddJob(j *Job) {
 	j.ProcessBy = 0
 	queue.PushJob(j)
 	workers, ok := server.funcWorker[j.FuncName]
+	
 	if ok {
-		var i int = 0
-		for it := workers.Workers.Front(); it != nil; it = it.Next() {
-			if server.wakeupWorker(j.FuncName, it.Value.(*Worker)){
-				i++
-			}
-			if server.tryTimes > 0 && i >= server.tryTimes {
-				break
-			}
+		
+		if workers.Workers.Len() == 0{
+			return
 		}
+
+		if workers.WakeIndex + 1 > workers.Workers.Len(){
+			workers.WakeIndex = 0
+		}
+
+		var i int = 0
+		var index int = 0
+		for it := workers.Workers.Front(); it != nil; it = it.Next() {
+			if index >= workers.WakeIndex{
+				if server.wakeupWorker(j.FuncName, it.Value.(*Worker)){
+					i++
+				}
+				if server.tryTimes > 0 && i >= server.tryTimes {
+					break
+				}
+			}
+			index++
+		}
+		workers.WakeIndex = index
 	}
 
 }

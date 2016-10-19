@@ -39,20 +39,11 @@ func (session *Session) handleConnection(server *Server, conn net.Conn) {
 	inbox := make(chan []byte, 2048)
 
 	defer func() {
-		if session.w != nil || session.c != nil {
-			logger.Logger().I("close inbox %v", sessionId)
-			e := &Event{tp: ctrlCloseSession, fromSessionId: sessionId,
-				result: createResCh()}
-			server.protoEvtCh <- e
-			<-e.result
-			close(inbox) //notify writer to quit
-		}else{
-			logger.Logger().I("close connection %v", conn)
-			err := conn.Close()
-			if err != nil{
-				logger.Logger().W("close connection error %v, %v", conn, err)
-			}
-		}
+		logger.Logger().I("close inbox %v", sessionId)
+		e := &Event{tp: ctrlCloseSession, fromSessionId: sessionId, result: createResCh()}
+		server.protoEvtCh <- e
+		<-e.result
+		close(inbox) //notify writer to quit
 	}()
 
 	go writer(conn, inbox)

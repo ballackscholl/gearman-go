@@ -14,7 +14,7 @@ const (
 var (
 	addr     *string = flag.String("addr", ":4730", "listening on, such as :4730")
 	monAddr  *string = flag.String("mon", ":5730", "listening on, such as :5730")
-	logLevel *string = flag.String("verbose", "info", "log level, such as:trace info warn error")
+	logLevel *string = flag.String("verbose", "trace", "log level, such as:trace info warn error")
 	tryTimes *int    = flag.Int("trytime", 2, "wake worker try times if equal 0 wake all sleep worker")
 	logPath  *string = flag.String("logpath", "./", "log path")
 	maxProc  *int    = flag.Int("prosize", runtime.NumCPU(), " process size, if <=0 it is going to CPU num")
