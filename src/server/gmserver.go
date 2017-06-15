@@ -191,8 +191,12 @@ func (server *Server) EvtLoop() {
 	tick := time.NewTicker(2 * time.Second)
 	for {
 		select {
-		case e := <-server.protoEvtCh:
-			server.handleProtoEvt(e)
+		case e, ok := <-server.protoEvtCh:
+			if ok {
+				server.handleProtoEvt(e)
+			}else{
+				logger.Logger().E("protoEvtCh error!!!!!!")
+			}
 		case <-tick.C:
 			server.clearTimeoutJob()
 		}

@@ -205,11 +205,14 @@ func readHeader(r io.Reader) (magic uint32, tp uint32, size uint32, err error) {
 
 func writer(conn net.Conn, outbox chan []byte) {
 	defer func() {
-		logger.Logger().I("writer close connection %v", conn)
-		err := conn.Close()
+		//fmt.Printf("writer: %v close over1\n", conn)
+		logger.Logger().I("writer goroute close %v", conn)
+		/*err := conn.Close()
 		if err != nil{
+			fmt.Printf("writer: %v close over2\n", err)
 			logger.Logger().W("writer close connection error %v, %v", conn, err)
-		}
+		}*/
+		//fmt.Printf("writer goroute close %v\n", conn)
 	}()
 
 	b := bytes.NewBuffer(nil)
@@ -218,6 +221,8 @@ func writer(conn net.Conn, outbox chan []byte) {
 		select {
 		case msg, ok := <-outbox:
 			if !ok {
+				//fmt.Printf("writer: outbox close over %v\n", conn)
+				logger.Logger().I("writer: outbox close over %v", conn)
 				return
 			}
 			b.Write(msg)
@@ -228,7 +233,8 @@ func writer(conn net.Conn, outbox chan []byte) {
 			conn.SetWriteDeadline(time.Now().Add(2 * time.Second))
 			_, err := conn.Write(b.Bytes())
 			if err != nil {
-				return
+				//fmt.Printf("writer: conn close over%v\n", conn)
+				logger.Logger().I("writer: conn close over %v", conn)
 			}
 			b.Reset()
 		}

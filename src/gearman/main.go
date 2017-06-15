@@ -19,7 +19,7 @@ var (
 	logPath  *string = flag.String("logpath", "./", "log path")
 	maxProc  *int    = flag.Int("prosize", runtime.NumCPU(), " process size, if <=0 it is going to CPU num")
 	lockMainProcess *bool = flag.Bool("lock", false, "lock EvtLoop process on specific cpu")
-	protoEvtChSize *int = flag.Int("protochannel", 256, "protochannel size default 256")
+	protoEvtChSize *int = flag.Int("protochannel", 1024, "protochannel size default 1024")
 )
 
 func main() {
@@ -35,7 +35,7 @@ func main() {
 	}
 
 	if *protoEvtChSize <=0 {
-		*protoEvtChSize = 256
+		*protoEvtChSize = 1024
 	}
 
 	runtime.GOMAXPROCS(procSize)

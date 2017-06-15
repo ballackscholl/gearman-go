@@ -21,7 +21,7 @@ func (session *Session) getWorker(sessionId int64, inbox chan []byte, conn net.C
 
 	session.w = &Worker{
 		Conn: conn, status: wsSleep, Connector: Connector{SessionId: sessionId,
-			in: inbox, ConnectAt: time.Now()}, canDo: make(map[string]bool)}
+			in: inbox, ConnectAt: time.Now(), isConnect: true}, canDo: make(map[string]bool)}
 
 	return session.w
 }
@@ -39,11 +39,41 @@ func (session *Session) handleConnection(server *Server, conn net.Conn) {
 	inbox := make(chan []byte, 2048)
 
 	defer func() {
+		
 		logger.Logger().I("close inbox %v", sessionId)
+		
 		e := &Event{tp: ctrlCloseSession, fromSessionId: sessionId, result: createResCh()}
 		server.protoEvtCh <- e
 		<-e.result
-		close(inbox) //notify writer to quit
+		close(e.result)
+
+		if session.w != nil{
+			cw := session.w
+			cw.locker.Lock()
+			cw.SetIsConnect(false)
+		}else if session.c != nil{
+			cw := session.c
+			cw.locker.Lock()
+			cw.SetIsConnect(false)
+		}
+
+		err := conn.Close()
+		if err != nil{
+			logger.Logger().W("close connection error %v, %v", conn, err)
+		}
+
+		close(inbox)
+		
+		if session.w != nil{
+			cw1 := session.w
+			cw1.locker.Unlock()
+			cw1.SetIsConnect(false)
+		}else if session.c != nil{
+			cw1 := session.c
+			cw1.locker.Unlock()
+			cw1.SetIsConnect(false)
+		}
+
 	}()
 
 	go writer(conn, inbox)
@@ -52,7 +82,7 @@ func (session *Session) handleConnection(server *Server, conn net.Conn) {
 	for {
 		tp, buf, err := ReadMessage(r)
 		if err != nil {
-			logger.Logger().W("sessionId: %v %v", sessionId, err)
+			logger.Logger().W("ReadMessage error sessionId: %v %v", sessionId, err)
 			return
 		}
 		args, ok := decodeArgs(tp, buf)
@@ -98,6 +128,7 @@ func (session *Session) handleConnection(server *Server, conn net.Conn) {
 				result: createResCh()}
 			server.protoEvtCh <- e
 			job := <-e.result
+			close(e.result)
 			if job == nil {
 				logger.Logger().T("sessionId:%v no job", sessionId)
 				sendReplyResult(inbox, nojobReply)
@@ -120,7 +151,7 @@ func (session *Session) handleConnection(server *Server, conn net.Conn) {
 		case SUBMIT_JOB, SUBMIT_JOB_LOW_BG, SUBMIT_JOB_LOW:
 			if session.c == nil {
 				session.c = &Client{Conn: conn, Connector: Connector{SessionId: sessionId, in: inbox,
-					ConnectAt: time.Now()}}
+					ConnectAt: time.Now(), isConnect:true}}
 			}
 			e := &Event{tp: tp,
 				args:   &Tuple{t0: session.c, t1: args[0], t2: args[1], t3: args[2]},

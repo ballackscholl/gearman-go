@@ -31,22 +31,30 @@ func registerWebHandler(s *Server, addr string) {
 	m.Get("/status/func", func(params martini.Params) string {
 		e := &Event{tp: getFuncWorkerStatus, result: createResCh()}
 		s.protoEvtCh <- e
-		return (<-e.result).(string)
+		ret := <-e.result;
+		close(e.result);
+		return (ret).(string)
 	})
 	m.Get("/status/worker", func(params martini.Params) string {
 		e := &Event{tp: getWorkerStatus, result: createResCh()}
 		s.protoEvtCh <- e
-		return (<-e.result).(string)
+		ret := <-e.result;
+		close(e.result);
+		return (ret).(string)
 	})
 	m.Get("/status/client", func(params martini.Params) string {
 		e := &Event{tp: getClientStatus, result: createResCh()}
 		s.protoEvtCh <- e
-		return (<-e.result).(string)
+		ret := <-e.result;
+		close(e.result);
+		return (ret).(string)
 	})
 	m.Get("/status/job", func(params martini.Params) string {
 		e := &Event{tp: getJobStatus, result: createResCh()}
 		s.protoEvtCh <- e
-		return (<-e.result).(string)
+		ret := <-e.result;
+		close(e.result);
+		return (ret).(string)
 	})
 	m.Get("/status/rmjob/:id", func(params martini.Params) string {
 
@@ -57,7 +65,9 @@ func registerWebHandler(s *Server, addr string) {
 
 		e := &Event{tp: removeJob, result: createResCh(), args: &Tuple{t0: id}}
 		s.protoEvtCh <- e
-		return (<-e.result).(string)
+		ret := <-e.result;
+		close(e.result);
+		return (ret).(string)
 	})
 	logger.Logger().E("%v", http.ListenAndServe(addr, m))
 }
