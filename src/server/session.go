@@ -30,8 +30,8 @@ func (session *Session) handleConnection(server *Server, conn net.Conn) {
 
 	conn.(*net.TCPConn).SetNoDelay(true)
 	conn.(*net.TCPConn).SetLinger(-1)
-	conn.(*net.TCPConn).SetReadBuffer(20 * 1024)
-	conn.(*net.TCPConn).SetWriteBuffer(20 * 1024)
+	conn.(*net.TCPConn).SetReadBuffer(1024 * 1024 * 5)
+	conn.(*net.TCPConn).SetWriteBuffer(1024 * 1024 * 5)
 	conn.(*net.TCPConn).SetKeepAlive(true)
 	conn.(*net.TCPConn).SetKeepAlivePeriod(2 * time.Minute)
 
@@ -77,7 +77,7 @@ func (session *Session) handleConnection(server *Server, conn net.Conn) {
 	}()
 
 	go writer(conn, inbox)
-	r := bufio.NewReaderSize(conn, 20*1024)
+	r := bufio.NewReaderSize(conn, 1024 * 1024 * 20)
 
 	for {
 		tp, buf, err := ReadMessage(r)
